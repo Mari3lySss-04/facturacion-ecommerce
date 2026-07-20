@@ -50,18 +50,23 @@
   .sec-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 20px}
   .sec-head h2{margin:0;font-size:24px}
   .sec-head p{margin:2px 0 0;color:var(--ink-soft);font-size:14px}
+  .search-bar{margin-bottom:20px}
+  .search-bar input{max-width:400px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
-  .prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .prod-img{width:100%;height:160px;object-fit:cover;background:var(--bg);display:block}
+  .prod-img-ph{width:100%;height:160px;background:linear-gradient(135deg,#E6E4DF,#F7F6F3);display:grid;place-items:center;color:var(--ink-soft);font-size:32px}
+  .prod-body{padding:16px;display:flex;flex-direction:column;flex:1}
   .prod-card h3{margin:0 0 4px;font-size:16px}
   .prod-card .desc{color:var(--ink-soft);font-size:13px;margin:0 0 14px;flex:1}
   .prod-card .price{font-family:'Sora';font-weight:700;font-size:20px;color:var(--brand-ink)}
   .prod-card .stock{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
   .prod-card .stock.low{color:var(--accent)}
-  .prod-foot{display:flex;gap:8px;align-items:center}
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
   table{width:100%;border-collapse:collapse}
   th{background:var(--bg);text-align:left;padding:12px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft)}
   td{padding:14px 16px;border-top:1px solid var(--line);font-size:14px}
+  .thumb{width:44px;height:44px;object-fit:cover;border-radius:6px;background:var(--bg)}
   .drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.2s;z-index:60}
   .drawer-bg.open{opacity:1;pointer-events:auto}
   .drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:90vw;background:var(--surface);box-shadow:-8px 0 30px rgba(0,0,0,.15);transform:translateX(100%);transition:.25s;z-index:61;display:flex;flex-direction:column}
@@ -79,6 +84,21 @@
   .totals{font-size:14px}
   .totals .row{display:flex;justify-content:space-between;padding:4px 0}
   .totals .grand{font-family:'Sora';font-weight:700;font-size:20px;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;place-items:center;z-index:70;padding:20px}
+  .modal-bg.open{display:grid}
+  .modal{background:var(--surface);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal h2{margin:0 0 4px;font-size:20px}
+  .modal .sub{color:var(--ink-soft);font-size:14px;margin:0 0 20px}
+  .card-visual{background:linear-gradient(135deg,#0F766E,#134E4A);border-radius:12px;padding:20px;color:#fff;margin-bottom:20px;font-family:'Sora'}
+  .card-visual .chip{width:36px;height:26px;background:rgba(255,255,255,.3);border-radius:5px;margin-bottom:20px}
+  .card-visual .num{font-size:17px;letter-spacing:2px;margin-bottom:16px}
+  .card-visual .row{display:flex;justify-content:space-between;font-size:11px;opacity:.85}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .stat-card .label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px}
+  .stat-card .value{font-family:'Sora';font-size:28px;font-weight:700;color:var(--brand-ink)}
+  .stat-card .sub{font-size:12px;color:var(--ink-soft);margin-top:4px}
   #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:90vw}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #toast.err{background:var(--danger)}
@@ -91,11 +111,12 @@
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><span class="mark">&#129534;</span> Distribuidora DIST</div>
+    <div class="brand"><span class="mark">&#129534;</span>Distribuidora DIST</div>
     <nav class="nav" id="nav">
       <button class="active" onclick="showView('catalogo',this)">Tienda</button>
       <button onclick="showView('historial',this)">Mis facturas</button>
       <button id="nav-admin" onclick="showView('admin',this)">Administrar productos</button>
+      <button id="nav-reportes" onclick="showView('reportes',this)">Reportes</button>
       <button id="nav-clientes" onclick="showView('clientes',this)">Clientes</button>
     </nav>
     <div class="spacer"></div>
@@ -114,47 +135,36 @@
         <button id="tab-register" onclick="switchAuth('register')">Registrarme</button>
       </div>
       <div id="auth-login">
-        <label>Correo electronico</label>
-        <input type="email" id="login-email" placeholder="tu@correo.com">
-        <label>Contrasena</label>
-        <input type="password" id="login-pass" placeholder="********">
+        <label>Correo electronico</label><input type="email" id="login-email" placeholder="tu@correo.com">
+        <label>Contrasena</label><input type="password" id="login-pass" placeholder="********">
         <button class="btn btn-primary" onclick="login()">Entrar</button>
       </div>
       <div id="auth-register" class="hidden">
-        <label>Nombre completo</label>
-        <input type="text" id="reg-name" placeholder="Ana Garcia">
-        <label>Correo electronico</label>
-        <input type="email" id="reg-email" placeholder="tu@correo.com">
-        <label>Contrasena</label>
-        <input type="password" id="reg-pass" placeholder="Minimo 8 caracteres">
+        <label>Nombre completo</label><input type="text" id="reg-name" placeholder="Ana Garcia">
+        <label>Correo electronico</label><input type="email" id="reg-email" placeholder="tu@correo.com">
+        <label>Contrasena</label><input type="password" id="reg-pass" placeholder="Minimo 8 caracteres">
         <button class="btn btn-primary" onclick="register()">Crear cuenta</button>
       </div>
       <div id="auth-confirm" class="hidden">
         <p class="auth-sub">Te enviamos un codigo a tu correo. Escribelo para activar tu cuenta.</p>
-        <label>Codigo de verificacion</label>
-        <input type="text" id="confirm-code" placeholder="123456">
+        <label>Codigo de verificacion</label><input type="text" id="confirm-code" placeholder="123456">
         <button class="btn btn-primary" onclick="confirmSignup()">Verificar</button>
       </div>
     </div>
   </section>
   <section id="view-catalogo" class="view">
-    <div class="sec-head">
-      <div><h2>Tienda</h2><p>Elige productos y agregalos al carrito</p></div>
-      <button class="btn btn-ghost btn-sm" onclick="loadProductos()">Actualizar</button>
-    </div>
+    <div class="sec-head"><div><h2>Tienda</h2><p>Elige productos y agregalos al carrito</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadProductos()">Actualizar</button></div>
+    <div class="search-bar"><input type="text" id="buscador" placeholder="Buscar productos..." oninput="filtrarProductos()"></div>
     <div class="grid" id="catalogo-grid"><div class="empty">Cargando productos...</div></div>
   </section>
   <section id="view-historial" class="view">
-    <div class="sec-head">
-      <div><h2>Mis facturas</h2><p>Historial de tus compras</p></div>
-      <button class="btn btn-ghost btn-sm" onclick="loadHistorial()">Actualizar</button>
-    </div>
-    <div class="panel">
-      <table>
-        <thead><tr><th>Factura</th><th>Fecha</th><th>Total</th><th></th></tr></thead>
-        <tbody id="historial-body"><tr><td colspan="4" class="empty">Sin facturas todavia</td></tr></tbody>
-      </table>
-    </div>
+    <div class="sec-head"><div><h2>Mis facturas</h2><p>Historial de tus compras</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadHistorial()">Actualizar</button></div>
+    <div class="panel"><table>
+      <thead><tr><th>Factura</th><th>Fecha</th><th>Total</th><th></th></tr></thead>
+      <tbody id="historial-body"><tr><td colspan="4" class="empty">Sin facturas todavia</td></tr></tbody>
+    </table></div>
   </section>
   <section id="view-admin" class="view">
     <div class="sec-head"><div><h2>Administrar productos</h2><p>Gestiona el inventario de la tienda</p></div></div>
@@ -165,28 +175,31 @@
         <div><label>Precio ($)</label><input type="number" id="p-precio" placeholder="9.99" step="0.01"></div>
         <div><label>Stock</label><input type="number" id="p-stock" placeholder="50"></div>
       </div>
-      <label>Descripcion</label>
-      <input type="text" id="p-desc" placeholder="Breve descripcion del producto">
+      <label>Descripcion</label><input type="text" id="p-desc" placeholder="Breve descripcion del producto">
+      <label>URL de la imagen</label><input type="text" id="p-img" placeholder="https://ejemplo.com/imagen.jpg">
       <button class="btn btn-accent" style="margin-top:16px" onclick="crearProducto()">Guardar producto</button>
     </div>
-    <div class="panel">
-      <table>
-        <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
-        <tbody id="admin-body"><tr><td colspan="4" class="empty">Sin productos</td></tr></tbody>
-      </table>
-    </div>
+    <div class="panel"><table>
+      <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+      <tbody id="admin-body"><tr><td colspan="4" class="empty">Sin productos</td></tr></tbody>
+    </table></div>
+  </section>
+  <section id="view-reportes" class="view">
+    <div class="sec-head"><div><h2>Reportes</h2><p>Resumen de ventas de la tienda</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadReportes()">Actualizar</button></div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="panel"><table>
+      <thead><tr><th>Fecha</th><th>Facturas</th><th>Total vendido</th></tr></thead>
+      <tbody id="reportes-body"><tr><td colspan="3" class="empty">Sin datos</td></tr></tbody>
+    </table></div>
   </section>
   <section id="view-clientes" class="view">
-    <div class="sec-head">
-      <div><h2>Clientes</h2><p>Personas que se han registrado y comprado</p></div>
-      <button class="btn btn-ghost btn-sm" onclick="loadClientes()">Actualizar</button>
-    </div>
-    <div class="panel">
-      <table>
-        <thead><tr><th>Cliente</th><th>Correo</th><th>Total comprado</th></tr></thead>
-        <tbody id="clientes-body"><tr><td colspan="3" class="empty">Sin clientes</td></tr></tbody>
-      </table>
-    </div>
+    <div class="sec-head"><div><h2>Clientes</h2><p>Personas registradas que han comprado</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadClientes()">Actualizar</button></div>
+    <div class="panel"><table>
+      <thead><tr><th>Cliente</th><th>Correo</th><th>Total comprado</th></tr></thead>
+      <tbody id="clientes-body"><tr><td colspan="3" class="empty">Sin clientes</td></tr></tbody>
+    </table></div>
   </section>
 </main>
 <div class="drawer-bg" id="drawer-bg" onclick="closeCart()"></div>
@@ -195,9 +208,30 @@
   <div class="drawer-body" id="cart-body"><div class="empty">Tu carrito esta vacio</div></div>
   <div class="drawer-foot" id="cart-foot"></div>
 </div>
+<div class="modal-bg" id="pago-modal">
+  <div class="modal">
+    <h2>Pago con tarjeta</h2>
+    <p class="sub">Ingresa los datos de tu tarjeta (simulacion, no se realiza cobro real)</p>
+    <div class="card-visual">
+      <div class="chip"></div>
+      <div class="num" id="card-preview">**** **** **** ****</div>
+      <div class="row"><span id="name-preview">NOMBRE APELLIDO</span><span id="exp-preview">MM/AA</span></div>
+    </div>
+    <label>Numero de tarjeta</label>
+    <input type="text" id="card-num" placeholder="4111 1111 1111 1111" maxlength="19" oninput="formatCard()">
+    <label>Nombre en la tarjeta</label>
+    <input type="text" id="card-name" placeholder="Como aparece en la tarjeta" oninput="updateCardPreview()">
+    <div class="row2">
+      <div><label>Vencimiento</label><input type="text" id="card-exp" placeholder="MM/AA" maxlength="5" oninput="formatExp()"></div>
+      <div><label>CVV</label><input type="text" id="card-cvv" placeholder="123" maxlength="4"></div>
+    </div>
+    <button class="btn btn-primary" onclick="procesarPago()">Pagar ahora</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="cerrarPago()">Cancelar</button>
+  </div>
+</div>
 <div id="toast"></div>
 <script>
- const CONFIG = {
+const CONFIG = {
     API_URL: "https://dwut4e9d63.execute-api.us-east-1.amazonaws.com/dev",
     COGNITO_POOL_ID: "us-east-1_KrGFtFE4C",
     COGNITO_CLIENT_ID: "5929i4s7iic9shg7n6biooch4b",
@@ -207,26 +241,26 @@ function esAdmin(email){
     const adminEmails = ['marielysperez2204@gmail.com'];  // correo mio admin
     return email && adminEmails.includes(email.toLowerCase());
 }
-let usuario = null, carrito = [], userPool = null, cognitoUser = null;
+let usuario=null, carrito=[], userPool=null, cognitoUser=null, todosProductos=[];
 function initCognito(){
-    userPool = new AmazonCognitoIdentity.CognitoUserPool({UserPoolId: CONFIG.COGNITO_POOL_ID, ClientId: CONFIG.COGNITO_CLIENT_ID});
-    const u = userPool.getCurrentUser();
-    if(u){ u.getSession((err, session)=>{ if(!err && session.isValid()){ const email=session.getIdToken().payload.email; const nombre=session.getIdToken().payload.name||email; onLoginSuccess({email,nombre}); } }); }
+    userPool=new AmazonCognitoIdentity.CognitoUserPool({UserPoolId:CONFIG.COGNITO_POOL_ID,ClientId:CONFIG.COGNITO_CLIENT_ID});
+    const u=userPool.getCurrentUser();
+    if(u){ u.getSession((err,session)=>{ if(!err&&session.isValid()){ const email=session.getIdToken().payload.email; const nombre=session.getIdToken().payload.name||email; onLoginSuccess({email,nombre}); } }); }
 }
 function switchAuth(mode){
-    document.getElementById('auth-login').classList.toggle('hidden', mode!=='login');
-    document.getElementById('auth-register').classList.toggle('hidden', mode!=='register');
+    document.getElementById('auth-login').classList.toggle('hidden',mode!=='login');
+    document.getElementById('auth-register').classList.toggle('hidden',mode!=='register');
     document.getElementById('auth-confirm').classList.add('hidden');
-    document.getElementById('tab-login').classList.toggle('active', mode==='login');
-    document.getElementById('tab-register').classList.toggle('active', mode==='register');
-    document.getElementById('auth-title').textContent = mode==='login' ? 'Iniciar sesion' : 'Crear cuenta';
+    document.getElementById('tab-login').classList.toggle('active',mode==='login');
+    document.getElementById('tab-register').classList.toggle('active',mode==='register');
+    document.getElementById('auth-title').textContent=mode==='login'?'Iniciar sesion':'Crear cuenta';
 }
 function register(){
-    const name=document.getElementById('reg-name').value.trim(), email=document.getElementById('reg-email').value.trim(), pass=document.getElementById('reg-pass').value;
-    if(!name||!email||!pass){ toast('Completa todos los campos', true); return; }
+    const name=document.getElementById('reg-name').value.trim(),email=document.getElementById('reg-email').value.trim(),pass=document.getElementById('reg-pass').value;
+    if(!name||!email||!pass){ toast('Completa todos los campos',true); return; }
     const attrs=[ new AmazonCognitoIdentity.CognitoUserAttribute({Name:'email',Value:email}), new AmazonCognitoIdentity.CognitoUserAttribute({Name:'name',Value:name}) ];
-    userPool.signUp(email, pass, attrs, null, (err, result)=>{
-        if(err){ toast(err.message, true); return; }
+    userPool.signUp(email,pass,attrs,null,(err,result)=>{
+        if(err){ toast(err.message,true); return; }
         cognitoUser=result.user; window._pendingEmail=email;
         document.getElementById('auth-login').classList.add('hidden');
         document.getElementById('auth-register').classList.add('hidden');
@@ -237,16 +271,16 @@ function register(){
 }
 function confirmSignup(){
     const code=document.getElementById('confirm-code').value.trim();
-    if(!cognitoUser){ toast('Registra primero', true); return; }
-    cognitoUser.confirmRegistration(code, true, (err)=>{
-        if(err){ toast(err.message, true); return; }
+    if(!cognitoUser){ toast('Registra primero',true); return; }
+    cognitoUser.confirmRegistration(code,true,(err)=>{
+        if(err){ toast(err.message,true); return; }
         toast('Cuenta verificada. Ya puedes entrar'); switchAuth('login');
         document.getElementById('login-email').value=window._pendingEmail||'';
     });
 }
 function login(){
-    const email=document.getElementById('login-email').value.trim(), pass=document.getElementById('login-pass').value;
-    if(!email||!pass){ toast('Completa correo y contrasena', true); return; }
+    const email=document.getElementById('login-email').value.trim(),pass=document.getElementById('login-pass').value;
+    if(!email||!pass){ toast('Completa correo y contrasena',true); return; }
     const authDetails=new AmazonCognitoIdentity.AuthenticationDetails({Username:email,Password:pass});
     const user=new AmazonCognitoIdentity.CognitoUser({Username:email,Pool:userPool});
     user.authenticateUser(authDetails,{ onSuccess:(session)=>{ const nombre=session.getIdToken().payload.name||email; onLoginSuccess({email,nombre}); }, onFailure:(err)=>toast(err.message,true) });
@@ -261,23 +295,25 @@ async function onLoginSuccess(u){
     document.getElementById('nav').style.display='';
     const admin=esAdmin(u.email);
     document.getElementById('nav-admin').style.display=admin?'':'none';
+    document.getElementById('nav-reportes').style.display=admin?'':'none';
     document.getElementById('nav-clientes').style.display=admin?'':'none';
-    showView('catalogo', document.querySelector('#nav button')); loadProductos();
+    showView('catalogo',document.querySelector('#nav button')); loadProductos();
 }
 function logout(){ const u=userPool.getCurrentUser(); if(u)u.signOut(); usuario=null; carrito=[]; updateCart(); location.reload(); }
-function showView(name, btn){
+function showView(name,btn){
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-'+name).classList.add('active');
     if(btn){ document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
     if(name==='historial') loadHistorial();
     if(name==='admin') loadAdminProductos();
+    if(name==='reportes') loadReportes();
     if(name==='clientes') loadClientes();
 }
-async function api(path, method, body){
+async function api(path,method,body){
     method=method||'GET';
-    const opts={method, headers:{'Content-Type':'application/json'}};
+    const opts={method,headers:{'Content-Type':'application/json'}};
     if(body) opts.body=JSON.stringify(body);
-    const res=await fetch(CONFIG.API_URL+path, opts);
+    const res=await fetch(CONFIG.API_URL+path,opts);
     const data=await res.json();
     if(!res.ok) throw new Error(data.error||'Error');
     return data;
@@ -285,47 +321,84 @@ async function api(path, method, body){
 async function loadProductos(){
     const grid=document.getElementById('catalogo-grid'); grid.innerHTML='<div class="empty">Cargando...</div>';
     try{
-        const prods=await api('/productos');
-        if(!prods.length){ grid.innerHTML='<div class="empty">No hay productos aun</div>'; return; }
-        grid.innerHTML=prods.map(p=>{ const stock=parseInt(p.stock||0);
-            return '<div class="prod-card"><h3>'+esc(p.nombre)+'</h3><p class="desc">'+esc(p.descripcion||'')+'</p><div class="price">$'+parseFloat(p.precio||0).toFixed(2)+'</div><div class="stock '+(stock<10?'low':'')+'">'+(stock>0?stock+' disponibles':'Agotado')+'</div><div class="prod-foot"><button class="btn btn-primary btn-sm" style="margin:0;width:auto" '+(stock<1?'disabled':'')+" onclick='addToCart("+JSON.stringify(p).replace(/'/g,"&#39;")+")'>Agregar</button></div></div>";
-        }).join('');
+        todosProductos=await api('/productos');
+        renderCatalogo(todosProductos);
     }catch(e){ grid.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+}
+function renderCatalogo(prods){
+    const grid=document.getElementById('catalogo-grid');
+    if(!prods.length){ grid.innerHTML='<div class="empty">No hay productos</div>'; return; }
+    grid.innerHTML=prods.map(p=>{ const stock=parseInt(p.stock||0);
+        const img=p.imagenUrl ? '<img src="'+esc(p.imagenUrl)+'" class="prod-img" onerror="this.outerHTML=\'<div class=\\\'prod-img-ph\\\'>&#128230;</div>\'">' : '<div class="prod-img-ph">&#128230;</div>';
+        return '<div class="prod-card">'+img+'<div class="prod-body"><h3>'+esc(p.nombre)+'</h3><p class="desc">'+esc(p.descripcion||'')+'</p><div class="price">$'+parseFloat(p.precio||0).toFixed(2)+'</div><div class="stock '+(stock<10?'low':'')+'">'+(stock>0?stock+' disponibles':'Agotado')+'</div><button class="btn btn-primary btn-sm" style="margin:0" '+(stock<1?'disabled':'')+" onclick='addToCart("+JSON.stringify(p).replace(/'/g,"&#39;")+")'>Agregar al carrito</button></div></div>";
+    }).join('');
+}
+function filtrarProductos(){
+    const q=document.getElementById('buscador').value.toLowerCase();
+    const filtrados=todosProductos.filter(p=>(p.nombre||'').toLowerCase().includes(q)||(p.descripcion||'').toLowerCase().includes(q));
+    renderCatalogo(filtrados);
 }
 function addToCart(p){
     const found=carrito.find(x=>x.productoId===p.productoId);
-    if(found) found.cantidad++; else carrito.push({productoId:p.productoId,nombre:p.nombre,precio:parseFloat(p.precio),cantidad:1});
+    const stock=parseInt(p.stock||0);
+    if(found){ if(found.cantidad>=stock){ toast('No hay mas stock disponible',true); return; } found.cantidad++; }
+    else carrito.push({productoId:p.productoId,nombre:p.nombre,precio:parseFloat(p.precio),cantidad:1,stock:stock});
     updateCart(); toast(p.nombre+' agregado');
 }
-function changeQty(id, delta){
+function changeQty(id,delta){
     const it=carrito.find(x=>x.productoId===id); if(!it) return;
+    if(delta>0 && it.cantidad>=it.stock){ toast('No hay mas stock',true); return; }
     it.cantidad+=delta; if(it.cantidad<1) carrito=carrito.filter(x=>x.productoId!==id); updateCart();
 }
 function updateCart(){
     const count=carrito.reduce((s,x)=>s+x.cantidad,0);
-    const badge=document.getElementById('cart-count'); badge.textContent=count; badge.classList.toggle('hidden', count===0);
-    const body=document.getElementById('cart-body'), foot=document.getElementById('cart-foot');
+    const badge=document.getElementById('cart-count'); badge.textContent=count; badge.classList.toggle('hidden',count===0);
+    const body=document.getElementById('cart-body'),foot=document.getElementById('cart-foot');
     if(!carrito.length){ body.innerHTML='<div class="empty">Tu carrito esta vacio</div>'; foot.innerHTML=''; return; }
     body.innerHTML=carrito.map(it=>'<div class="cart-item"><div class="info"><div class="n">'+esc(it.nombre)+'</div><div class="p">$'+it.precio.toFixed(2)+' c/u</div></div><div class="qty"><button onclick="changeQty(\''+it.productoId+'\',-1)">-</button><span>'+it.cantidad+'</span><button onclick="changeQty(\''+it.productoId+'\',1)">+</button></div></div>').join('');
-    const subtotal=carrito.reduce((s,x)=>s+x.precio*x.cantidad,0), itbms=subtotal*0.07, total=subtotal+itbms;
-    foot.innerHTML='<div class="totals"><div class="row"><span>Subtotal</span><span>$'+subtotal.toFixed(2)+'</span></div><div class="row"><span>ITBMS (7%)</span><span>$'+itbms.toFixed(2)+'</span></div><div class="row grand"><span>Total</span><span>$'+total.toFixed(2)+'</span></div></div><button class="btn btn-primary" onclick="pagar()">Pagar y generar factura</button>';
+    const subtotal=carrito.reduce((s,x)=>s+x.precio*x.cantidad,0),itbms=subtotal*0.07,total=subtotal+itbms;
+    foot.innerHTML='<div class="totals"><div class="row"><span>Subtotal</span><span>$'+subtotal.toFixed(2)+'</span></div><div class="row"><span>ITBMS (7%)</span><span>$'+itbms.toFixed(2)+'</span></div><div class="row grand"><span>Total</span><span>$'+total.toFixed(2)+'</span></div></div><button class="btn btn-primary" onclick="abrirPago()">Proceder al pago</button>';
 }
 function openCart(){ document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-bg').classList.add('open'); }
 function closeCart(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-bg').classList.remove('open'); }
-async function pagar(){
-    if(!carrito.length) return;
+function abrirPago(){ if(!carrito.length) return; closeCart(); document.getElementById('pago-modal').classList.add('open'); }
+function cerrarPago(){ document.getElementById('pago-modal').classList.remove('open'); }
+function formatCard(){
+    let v=document.getElementById('card-num').value.replace(/\D/g,'').substring(0,16);
+    let f=v.match(/.{1,4}/g); document.getElementById('card-num').value=f?f.join(' '):'';
+    document.getElementById('card-preview').textContent=(v+'****************'.substring(v.length)).match(/.{1,4}/g).join(' ');
+}
+function formatExp(){
+    let v=document.getElementById('card-exp').value.replace(/\D/g,'').substring(0,4);
+    if(v.length>=3) v=v.substring(0,2)+'/'+v.substring(2);
+    document.getElementById('card-exp').value=v;
+    document.getElementById('exp-preview').textContent=v||'MM/AA';
+}
+function updateCardPreview(){
+    document.getElementById('name-preview').textContent=(document.getElementById('card-name').value||'NOMBRE APELLIDO').toUpperCase();
+}
+async function procesarPago(){
+    const num=document.getElementById('card-num').value.replace(/\s/g,''), name=document.getElementById('card-name').value.trim(), exp=document.getElementById('card-exp').value, cvv=document.getElementById('card-cvv').value;
+    if(num.length<15){ toast('Numero de tarjeta invalido',true); return; }
+    if(!name){ toast('Ingresa el nombre de la tarjeta',true); return; }
+    if(exp.length<5){ toast('Fecha de vencimiento invalida',true); return; }
+    if(cvv.length<3){ toast('CVV invalido',true); return; }
+    toast('Procesando pago...');
     try{
-        toast('Procesando pago...');
-        await api('/facturas','POST',{ clienteId:usuario.email, clienteNombre:usuario.nombre, clienteEmail:usuario.email, items:carrito.map(x=>({nombre:x.nombre,precio:x.precio,cantidad:x.cantidad})) });
-        carrito=[]; updateCart(); closeCart(); toast('Factura generada! Revisa tu correo');
-        showView('historial', document.querySelectorAll('#nav button')[1]);
-    }catch(e){ toast('Error: '+e.message, true); }
+        await api('/facturas','POST',{ clienteId:usuario.email, clienteNombre:usuario.nombre, clienteEmail:usuario.email, items:carrito.map(x=>({productoId:x.productoId,nombre:x.nombre,precio:x.precio,cantidad:x.cantidad})) });
+        carrito=[]; updateCart(); cerrarPago();
+        ['card-num','card-name','card-exp','card-cvv'].forEach(id=>document.getElementById(id).value='');
+        document.getElementById('card-preview').textContent='**** **** **** ****';
+        toast('Pago exitoso! Factura generada. Revisa tu correo');
+        showView('historial',document.querySelectorAll('#nav button')[1]);
+    }catch(e){ toast('Error: '+e.message,true); }
 }
 async function loadHistorial(){
     const body=document.getElementById('historial-body'); body.innerHTML='<tr><td colspan="4" class="empty">Cargando...</td></tr>';
     try{
         const facturas=await api('/facturas?clienteId='+encodeURIComponent(usuario.email));
         if(!facturas.length){ body.innerHTML='<tr><td colspan="4" class="empty">Aun no tienes facturas</td></tr>'; return; }
+        facturas.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
         body.innerHTML=facturas.map(f=>'<tr><td><span class="badge">#'+f.facturaId.substring(0,8)+'</span></td><td>'+esc(f.fecha||'')+'</td><td><b>$'+parseFloat(f.total||0).toFixed(2)+'</b></td><td><button class="btn btn-ghost btn-sm" onclick='+"'verFactura("+JSON.stringify(f).replace(/'/g,"&#39;")+")'"+'>Ver detalle</button></td></tr>').join('');
     }catch(e){ body.innerHTML='<tr><td colspan="4" class="empty">Error: '+e.message+'</td></tr>'; }
 }
@@ -339,19 +412,43 @@ async function loadAdminProductos(){
     try{
         const prods=await api('/productos');
         if(!prods.length){ body.innerHTML='<tr><td colspan="4" class="empty">Sin productos</td></tr>'; return; }
-        body.innerHTML=prods.map(p=>'<tr><td><b>'+esc(p.nombre)+'</b><br><small style="color:var(--ink-soft)">'+esc(p.descripcion||'')+'</small></td><td>$'+parseFloat(p.precio||0).toFixed(2)+'</td><td>'+(p.stock||0)+'</td><td><button class="btn btn-danger btn-sm" onclick="borrarProducto(\''+p.productoId+'\')">Eliminar</button></td></tr>').join('');
+        body.innerHTML=prods.map(p=>{
+            const thumb=p.imagenUrl ? '<img src="'+esc(p.imagenUrl)+'" class="thumb">' : '';
+            return '<tr><td><div style="display:flex;gap:10px;align-items:center">'+thumb+'<div><b>'+esc(p.nombre)+'</b><br><small style="color:var(--ink-soft)">'+esc(p.descripcion||'')+'</small></div></div></td><td>$'+parseFloat(p.precio||0).toFixed(2)+'</td><td>'+(p.stock||0)+'</td><td><button class="btn btn-danger btn-sm" onclick="borrarProducto(\''+p.productoId+'\')">Eliminar</button></td></tr>';
+        }).join('');
     }catch(e){ body.innerHTML='<tr><td colspan="4" class="empty">Error: '+e.message+'</td></tr>'; }
 }
 async function crearProducto(){
-    const nombre=document.getElementById('p-nombre').value.trim(), precio=document.getElementById('p-precio').value, stock=document.getElementById('p-stock').value, desc=document.getElementById('p-desc').value.trim();
-    if(!nombre||!precio){ toast('Nombre y precio son obligatorios', true); return; }
-    try{ await api('/productos','POST',{nombre,precio,stock:stock||0,descripcion:desc}); toast('Producto agregado');
-        ['p-nombre','p-precio','p-stock','p-desc'].forEach(id=>document.getElementById(id).value=''); loadAdminProductos();
-    }catch(e){ toast('Error: '+e.message, true); }
+    const nombre=document.getElementById('p-nombre').value.trim(),precio=document.getElementById('p-precio').value,stock=document.getElementById('p-stock').value,desc=document.getElementById('p-desc').value.trim(),img=document.getElementById('p-img').value.trim();
+    if(!nombre||!precio){ toast('Nombre y precio son obligatorios',true); return; }
+    try{ await api('/productos','POST',{nombre,precio,stock:stock||0,descripcion:desc,imagenUrl:img}); toast('Producto agregado');
+        ['p-nombre','p-precio','p-stock','p-desc','p-img'].forEach(id=>document.getElementById(id).value=''); loadAdminProductos();
+    }catch(e){ toast('Error: '+e.message,true); }
 }
 async function borrarProducto(id){
     if(!confirm('Eliminar este producto?')) return;
-    try{ await api('/productos/'+id,'DELETE'); toast('Eliminado'); loadAdminProductos(); }catch(e){ toast('Error: '+e.message, true); }
+    try{ await api('/productos/'+id,'DELETE'); toast('Eliminado'); loadAdminProductos(); }catch(e){ toast('Error: '+e.message,true); }
+}
+async function loadReportes(){
+    const grid=document.getElementById('stat-grid'), body=document.getElementById('reportes-body');
+    grid.innerHTML='<div class="empty">Cargando...</div>'; body.innerHTML='';
+    try{
+        const facturas=await api('/facturas');
+        const totalVentas=facturas.reduce((s,f)=>s+parseFloat(f.total||0),0);
+        const numFacturas=facturas.length;
+        const promedio=numFacturas?totalVentas/numFacturas:0;
+        const clientesUnicos=new Set(facturas.map(f=>f.clienteId)).size;
+        grid.innerHTML=
+            '<div class="stat-card"><div class="label">Total vendido</div><div class="value">$'+totalVentas.toFixed(2)+'</div></div>'+
+            '<div class="stat-card"><div class="label">Facturas emitidas</div><div class="value">'+numFacturas+'</div></div>'+
+            '<div class="stat-card"><div class="label">Ticket promedio</div><div class="value">$'+promedio.toFixed(2)+'</div></div>'+
+            '<div class="stat-card"><div class="label">Clientes con compras</div><div class="value">'+clientesUnicos+'</div></div>';
+        const porDia={};
+        facturas.forEach(f=>{ const dia=(f.fecha||'').substring(0,10); if(!porDia[dia]) porDia[dia]={n:0,total:0}; porDia[dia].n++; porDia[dia].total+=parseFloat(f.total||0); });
+        const dias=Object.keys(porDia).sort().reverse();
+        if(!dias.length){ body.innerHTML='<tr><td colspan="3" class="empty">Sin ventas</td></tr>'; return; }
+        body.innerHTML=dias.map(d=>'<tr><td>'+d+'</td><td>'+porDia[d].n+'</td><td><b>$'+porDia[d].total.toFixed(2)+'</b></td></tr>').join('');
+    }catch(e){ grid.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
 }
 async function loadClientes(){
     const body=document.getElementById('clientes-body'); body.innerHTML='<tr><td colspan="3" class="empty">Cargando...</td></tr>';
@@ -361,7 +458,7 @@ async function loadClientes(){
         body.innerHTML=clientes.map(c=>'<tr><td><b>'+esc(c.nombre||'')+'</b></td><td>'+esc(c.email||'')+'</td><td>$'+parseFloat(c.totalCompras||0).toFixed(2)+'</td></tr>').join('');
     }catch(e){ body.innerHTML='<tr><td colspan="3" class="empty">Error: '+e.message+'</td></tr>'; }
 }
-function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show'+(err?' err':''); setTimeout(()=>t.className=err?'err':'', 3000); }
+function toast(msg,err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show'+(err?' err':''); setTimeout(()=>t.className=err?'err':'',3000); }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 document.getElementById('cart-btn').style.display='none';
 document.getElementById('logout-btn').style.display='none';

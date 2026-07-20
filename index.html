@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TiendaFactura · Facturación en línea</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/6.3.7/amazon-cognito-identity.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F3; --surface:#FFFFFF; --ink:#1A1D24; --ink-soft:#5B6472;
+    --line:#E6E4DF; --brand:#0F766E; --brand-soft:#CCFBF1; --brand-ink:#134E4A;
+    --accent:#F97316; --danger:#DC2626; --ok:#16A34A;
+    --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5}
+  h1,h2,h3,.brand{font-family:'Sora',sans-serif}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+  .topbar-inner{max-width:1120px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px}
+  .brand{font-weight:800;font-size:20px;display:flex;align-items:center;gap:10px}
+  .brand .mark{width:30px;height:30px;background:var(--brand);border-radius:8px;display:grid;place-items:center;color:#fff;font-size:16px}
+  .nav{display:flex;gap:4px;margin-left:20px}
+  .nav button{background:none;border:none;padding:8px 14px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+  .nav button.active{background:var(--brand-soft);color:var(--brand-ink)}
+  .nav button:hover:not(.active){background:var(--bg)}
+  .spacer{flex:1}
+  .user-chip{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-soft)}
+  .cart-btn{position:relative;background:var(--ink);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer}
+  .cart-count{position:absolute;top:-7px;right:-7px;background:var(--accent);color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;display:grid;place-items:center;font-weight:700}
+  main{max-width:1120px;margin:0 auto;padding:28px 20px 80px}
+  .view{display:none}.view.active{display:block}
+  .auth-wrap{max-width:400px;margin:60px auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:32px;box-shadow:var(--shadow)}
+  .auth-wrap h2{margin:0 0 4px;font-size:22px}
+  .auth-sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px}
+  .auth-tabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:20px}
+  .auth-tabs button{flex:1;padding:9px;border:none;background:none;border-radius:8px;font-family:inherit;font-weight:600;font-size:14px;color:var(--ink-soft);cursor:pointer}
+  .auth-tabs button.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin:14px 0 6px}
+  input,textarea,select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:14px;background:var(--surface);color:var(--ink)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border:none;border-radius:9px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--brand);color:#fff;width:100%;margin-top:20px}
+  .btn-primary:hover{background:var(--brand-ink)}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--brand)}
+  .btn-sm{padding:7px 12px;font-size:13px}
+  .btn-danger{background:none;color:var(--danger);border:1px solid var(--line)}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 20px}
+  .sec-head h2{margin:0;font-size:24px}
+  .sec-head p{margin:2px 0 0;color:var(--ink-soft);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+  .prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .prod-card h3{margin:0 0 4px;font-size:16px}
+  .prod-card .desc{color:var(--ink-soft);font-size:13px;margin:0 0 14px;flex:1}
+  .prod-card .price{font-family:'Sora';font-weight:700;font-size:20px;color:var(--brand-ink)}
+  .prod-card .stock{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
+  .prod-card .stock.low{color:var(--accent)}
+  .prod-foot{display:flex;gap:8px;align-items:center}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{background:var(--bg);text-align:left;padding:12px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft)}
+  td{padding:14px 16px;border-top:1px solid var(--line);font-size:14px}
+  .drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.2s;z-index:60}
+  .drawer-bg.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:90vw;background:var(--surface);box-shadow:-8px 0 30px rgba(0,0,0,.15);transform:translateX(100%);transition:.25s;z-index:61;display:flex;flex-direction:column}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .drawer-head h2{margin:0;font-size:18px}
+  .drawer-body{flex:1;overflow-y:auto;padding:20px}
+  .drawer-foot{padding:20px;border-top:1px solid var(--line)}
+  .cart-item{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+  .cart-item .info{flex:1}
+  .cart-item .info .n{font-weight:600;font-size:14px}
+  .cart-item .info .p{color:var(--ink-soft);font-size:13px}
+  .qty{display:flex;align-items:center;gap:8px}
+  .qty button{width:26px;height:26px;border:1px solid var(--line);background:var(--surface);border-radius:6px;cursor:pointer;font-weight:600}
+  .totals{font-size:14px}
+  .totals .row{display:flex;justify-content:space-between;padding:4px 0}
+  .totals .grand{font-family:'Sora';font-weight:700;font-size:20px;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{background:var(--danger)}
+  .empty{text-align:center;padding:50px 20px;color:var(--ink-soft)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--brand-soft);color:var(--brand-ink)}
+  .hidden{display:none!important}
+  @media(max-width:640px){.nav{display:none}.topbar-inner{gap:8px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="mark">&#129534;</span> TiendaFactura</div>
+    <nav class="nav" id="nav">
+      <button class="active" onclick="showView('catalogo',this)">Tienda</button>
+      <button onclick="showView('historial',this)">Mis facturas</button>
+      <button id="nav-admin" onclick="showView('admin',this)">Administrar productos</button>
+      <button id="nav-clientes" onclick="showView('clientes',this)">Clientes</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="user-chip" id="user-chip"></div>
+    <button class="cart-btn" id="cart-btn" onclick="openCart()">Carrito <span class="cart-count hidden" id="cart-count">0</span></button>
+    <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logout()">Salir</button>
+  </div>
+</div>
+<main>
+  <section id="view-auth" class="view active">
+    <div class="auth-wrap">
+      <h2 id="auth-title">Iniciar sesion</h2>
+      <p class="auth-sub" id="auth-sub">Entra para comprar y ver tus facturas</p>
+      <div class="auth-tabs">
+        <button class="active" id="tab-login" onclick="switchAuth('login')">Entrar</button>
+        <button id="tab-register" onclick="switchAuth('register')">Registrarme</button>
+      </div>
+      <div id="auth-login">
+        <label>Correo electronico</label>
+        <input type="email" id="login-email" placeholder="tu@correo.com">
+        <label>Contrasena</label>
+        <input type="password" id="login-pass" placeholder="********">
+        <button class="btn btn-primary" onclick="login()">Entrar</button>
+      </div>
+      <div id="auth-register" class="hidden">
+        <label>Nombre completo</label>
+        <input type="text" id="reg-name" placeholder="Ana Garcia">
+        <label>Correo electronico</label>
+        <input type="email" id="reg-email" placeholder="tu@correo.com">
+        <label>Contrasena</label>
+        <input type="password" id="reg-pass" placeholder="Minimo 8 caracteres">
+        <button class="btn btn-primary" onclick="register()">Crear cuenta</button>
+      </div>
+      <div id="auth-confirm" class="hidden">
+        <p class="auth-sub">Te enviamos un codigo a tu correo. Escribelo para activar tu cuenta.</p>
+        <label>Codigo de verificacion</label>
+        <input type="text" id="confirm-code" placeholder="123456">
+        <button class="btn btn-primary" onclick="confirmSignup()">Verificar</button>
+      </div>
+    </div>
+  </section>
+  <section id="view-catalogo" class="view">
+    <div class="sec-head">
+      <div><h2>Tienda</h2><p>Elige productos y agregalos al carrito</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadProductos()">Actualizar</button>
+    </div>
+    <div class="grid" id="catalogo-grid"><div class="empty">Cargando productos...</div></div>
+  </section>
+  <section id="view-historial" class="view">
+    <div class="sec-head">
+      <div><h2>Mis facturas</h2><p>Historial de tus compras</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadHistorial()">Actualizar</button>
+    </div>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Factura</th><th>Fecha</th><th>Total</th><th></th></tr></thead>
+        <tbody id="historial-body"><tr><td colspan="4" class="empty">Sin facturas todavia</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="view-admin" class="view">
+    <div class="sec-head"><div><h2>Administrar productos</h2><p>Gestiona el inventario de la tienda</p></div></div>
+    <div class="panel" style="padding:22px;margin-bottom:24px">
+      <h3 style="margin:0 0 14px">Agregar producto</h3>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px">
+        <div><label>Nombre</label><input type="text" id="p-nombre" placeholder="Camiseta"></div>
+        <div><label>Precio ($)</label><input type="number" id="p-precio" placeholder="9.99" step="0.01"></div>
+        <div><label>Stock</label><input type="number" id="p-stock" placeholder="50"></div>
+      </div>
+      <label>Descripcion</label>
+      <input type="text" id="p-desc" placeholder="Breve descripcion del producto">
+      <button class="btn btn-accent" style="margin-top:16px" onclick="crearProducto()">Guardar producto</button>
+    </div>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+        <tbody id="admin-body"><tr><td colspan="4" class="empty">Sin productos</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="view-clientes" class="view">
+    <div class="sec-head">
+      <div><h2>Clientes</h2><p>Personas que se han registrado y comprado</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadClientes()">Actualizar</button>
+    </div>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Cliente</th><th>Correo</th><th>Total comprado</th></tr></thead>
+        <tbody id="clientes-body"><tr><td colspan="3" class="empty">Sin clientes</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<div class="drawer-bg" id="drawer-bg" onclick="closeCart()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head"><h2>Tu carrito</h2><button class="btn btn-ghost btn-sm" onclick="closeCart()">X</button></div>
+  <div class="drawer-body" id="cart-body"><div class="empty">Tu carrito esta vacio</div></div>
+  <div class="drawer-foot" id="cart-foot"></div>
+</div>
+<div id="toast"></div>
+<script>
+ const CONFIG = {
+    API_URL: "https://dwut4e9d63.execute-api.us-east-1.amazonaws.com/dev",
+    COGNITO_POOL_ID: "us-east-1_KrGFtFE4C",
+    COGNITO_CLIENT_ID: "5929i4s7iic9shg7n6biooch4b",
+    COGNITO_REGION: "us-east-1"
+};
+function esAdmin(email){ return email && email.toLowerCase().includes('admin'); }
+let usuario = null, carrito = [], userPool = null, cognitoUser = null;
+function initCognito(){
+    userPool = new AmazonCognitoIdentity.CognitoUserPool({UserPoolId: CONFIG.COGNITO_POOL_ID, ClientId: CONFIG.COGNITO_CLIENT_ID});
+    const u = userPool.getCurrentUser();
+    if(u){ u.getSession((err, session)=>{ if(!err && session.isValid()){ const email=session.getIdToken().payload.email; const nombre=session.getIdToken().payload.name||email; onLoginSuccess({email,nombre}); } }); }
+}
+function switchAuth(mode){
+    document.getElementById('auth-login').classList.toggle('hidden', mode!=='login');
+    document.getElementById('auth-register').classList.toggle('hidden', mode!=='register');
+    document.getElementById('auth-confirm').classList.add('hidden');
+    document.getElementById('tab-login').classList.toggle('active', mode==='login');
+    document.getElementById('tab-register').classList.toggle('active', mode==='register');
+    document.getElementById('auth-title').textContent = mode==='login' ? 'Iniciar sesion' : 'Crear cuenta';
+}
+function register(){
+    const name=document.getElementById('reg-name').value.trim(), email=document.getElementById('reg-email').value.trim(), pass=document.getElementById('reg-pass').value;
+    if(!name||!email||!pass){ toast('Completa todos los campos', true); return; }
+    const attrs=[ new AmazonCognitoIdentity.CognitoUserAttribute({Name:'email',Value:email}), new AmazonCognitoIdentity.CognitoUserAttribute({Name:'name',Value:name}) ];
+    userPool.signUp(email, pass, attrs, null, (err, result)=>{
+        if(err){ toast(err.message, true); return; }
+        cognitoUser=result.user; window._pendingEmail=email;
+        document.getElementById('auth-login').classList.add('hidden');
+        document.getElementById('auth-register').classList.add('hidden');
+        document.getElementById('auth-confirm').classList.remove('hidden');
+        document.getElementById('auth-title').textContent='Verifica tu correo';
+        toast('Te enviamos un codigo a tu correo');
+    });
+}
+function confirmSignup(){
+    const code=document.getElementById('confirm-code').value.trim();
+    if(!cognitoUser){ toast('Registra primero', true); return; }
+    cognitoUser.confirmRegistration(code, true, (err)=>{
+        if(err){ toast(err.message, true); return; }
+        toast('Cuenta verificada. Ya puedes entrar'); switchAuth('login');
+        document.getElementById('login-email').value=window._pendingEmail||'';
+    });
+}
+function login(){
+    const email=document.getElementById('login-email').value.trim(), pass=document.getElementById('login-pass').value;
+    if(!email||!pass){ toast('Completa correo y contrasena', true); return; }
+    const authDetails=new AmazonCognitoIdentity.AuthenticationDetails({Username:email,Password:pass});
+    const user=new AmazonCognitoIdentity.CognitoUser({Username:email,Pool:userPool});
+    user.authenticateUser(authDetails,{ onSuccess:(session)=>{ const nombre=session.getIdToken().payload.name||email; onLoginSuccess({email,nombre}); }, onFailure:(err)=>toast(err.message,true) });
+}
+async function onLoginSuccess(u){
+    usuario=u;
+    try{ await api('/clientes','POST',{clienteId:u.email,nombre:u.nombre,email:u.email}); }catch(e){}
+    document.getElementById('view-auth').classList.remove('active');
+    document.getElementById('user-chip').textContent=u.nombre;
+    document.getElementById('cart-btn').style.display='';
+    document.getElementById('logout-btn').style.display='';
+    document.getElementById('nav').style.display='';
+    const admin=esAdmin(u.email);
+    document.getElementById('nav-admin').style.display=admin?'':'none';
+    document.getElementById('nav-clientes').style.display=admin?'':'none';
+    showView('catalogo', document.querySelector('#nav button')); loadProductos();
+}
+function logout(){ const u=userPool.getCurrentUser(); if(u)u.signOut(); usuario=null; carrito=[]; updateCart(); location.reload(); }
+function showView(name, btn){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+name).classList.add('active');
+    if(btn){ document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+    if(name==='historial') loadHistorial();
+    if(name==='admin') loadAdminProductos();
+    if(name==='clientes') loadClientes();
+}
+async function api(path, method, body){
+    method=method||'GET';
+    const opts={method, headers:{'Content-Type':'application/json'}};
+    if(body) opts.body=JSON.stringify(body);
+    const res=await fetch(CONFIG.API_URL+path, opts);
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Error');
+    return data;
+}
+async function loadProductos(){
+    const grid=document.getElementById('catalogo-grid'); grid.innerHTML='<div class="empty">Cargando...</div>';
+    try{
+        const prods=await api('/productos');
+        if(!prods.length){ grid.innerHTML='<div class="empty">No hay productos aun</div>'; return; }
+        grid.innerHTML=prods.map(p=>{ const stock=parseInt(p.stock||0);
+            return '<div class="prod-card"><h3>'+esc(p.nombre)+'</h3><p class="desc">'+esc(p.descripcion||'')+'</p><div class="price">$'+parseFloat(p.precio||0).toFixed(2)+'</div><div class="stock '+(stock<10?'low':'')+'">'+(stock>0?stock+' disponibles':'Agotado')+'</div><div class="prod-foot"><button class="btn btn-primary btn-sm" style="margin:0;width:auto" '+(stock<1?'disabled':'')+" onclick='addToCart("+JSON.stringify(p).replace(/'/g,"&#39;")+")'>Agregar</button></div></div>";
+        }).join('');
+    }catch(e){ grid.innerHTML='<div class="empty">Error: '+e.message+'</div>'; }
+}
+function addToCart(p){
+    const found=carrito.find(x=>x.productoId===p.productoId);
+    if(found) found.cantidad++; else carrito.push({productoId:p.productoId,nombre:p.nombre,precio:parseFloat(p.precio),cantidad:1});
+    updateCart(); toast(p.nombre+' agregado');
+}
+function changeQty(id, delta){
+    const it=carrito.find(x=>x.productoId===id); if(!it) return;
+    it.cantidad+=delta; if(it.cantidad<1) carrito=carrito.filter(x=>x.productoId!==id); updateCart();
+}
+function updateCart(){
+    const count=carrito.reduce((s,x)=>s+x.cantidad,0);
+    const badge=document.getElementById('cart-count'); badge.textContent=count; badge.classList.toggle('hidden', count===0);
+    const body=document.getElementById('cart-body'), foot=document.getElementById('cart-foot');
+    if(!carrito.length){ body.innerHTML='<div class="empty">Tu carrito esta vacio</div>'; foot.innerHTML=''; return; }
+    body.innerHTML=carrito.map(it=>'<div class="cart-item"><div class="info"><div class="n">'+esc(it.nombre)+'</div><div class="p">$'+it.precio.toFixed(2)+' c/u</div></div><div class="qty"><button onclick="changeQty(\''+it.productoId+'\',-1)">-</button><span>'+it.cantidad+'</span><button onclick="changeQty(\''+it.productoId+'\',1)">+</button></div></div>').join('');
+    const subtotal=carrito.reduce((s,x)=>s+x.precio*x.cantidad,0), itbms=subtotal*0.07, total=subtotal+itbms;
+    foot.innerHTML='<div class="totals"><div class="row"><span>Subtotal</span><span>$'+subtotal.toFixed(2)+'</span></div><div class="row"><span>ITBMS (7%)</span><span>$'+itbms.toFixed(2)+'</span></div><div class="row grand"><span>Total</span><span>$'+total.toFixed(2)+'</span></div></div><button class="btn btn-primary" onclick="pagar()">Pagar y generar factura</button>';
+}
+function openCart(){ document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-bg').classList.add('open'); }
+function closeCart(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-bg').classList.remove('open'); }
+async function pagar(){
+    if(!carrito.length) return;
+    try{
+        toast('Procesando pago...');
+        await api('/facturas','POST',{ clienteId:usuario.email, clienteNombre:usuario.nombre, clienteEmail:usuario.email, items:carrito.map(x=>({nombre:x.nombre,precio:x.precio,cantidad:x.cantidad})) });
+        carrito=[]; updateCart(); closeCart(); toast('Factura generada! Revisa tu correo');
+        showView('historial', document.querySelectorAll('#nav button')[1]);
+    }catch(e){ toast('Error: '+e.message, true); }
+}
+async function loadHistorial(){
+    const body=document.getElementById('historial-body'); body.innerHTML='<tr><td colspan="4" class="empty">Cargando...</td></tr>';
+    try{
+        const facturas=await api('/facturas?clienteId='+encodeURIComponent(usuario.email));
+        if(!facturas.length){ body.innerHTML='<tr><td colspan="4" class="empty">Aun no tienes facturas</td></tr>'; return; }
+        body.innerHTML=facturas.map(f=>'<tr><td><span class="badge">#'+f.facturaId.substring(0,8)+'</span></td><td>'+esc(f.fecha||'')+'</td><td><b>$'+parseFloat(f.total||0).toFixed(2)+'</b></td><td><button class="btn btn-ghost btn-sm" onclick='+"'verFactura("+JSON.stringify(f).replace(/'/g,"&#39;")+")'"+'>Ver detalle</button></td></tr>').join('');
+    }catch(e){ body.innerHTML='<tr><td colspan="4" class="empty">Error: '+e.message+'</td></tr>'; }
+}
+function verFactura(f){
+    let items=[]; try{ items=JSON.parse(f.items); }catch(e){}
+    const filas=items.map(i=>i.nombre+' x'+i.cantidad+' - $'+(i.precio*i.cantidad).toFixed(2)).join('\n');
+    alert('FACTURA #'+f.facturaId.substring(0,8)+'\nFecha: '+f.fecha+'\n\n'+filas+'\n\nSubtotal: $'+parseFloat(f.subtotal).toFixed(2)+'\nITBMS: $'+parseFloat(f.itbms).toFixed(2)+'\nTOTAL: $'+parseFloat(f.total).toFixed(2));
+}
+async function loadAdminProductos(){
+    const body=document.getElementById('admin-body'); body.innerHTML='<tr><td colspan="4" class="empty">Cargando...</td></tr>';
+    try{
+        const prods=await api('/productos');
+        if(!prods.length){ body.innerHTML='<tr><td colspan="4" class="empty">Sin productos</td></tr>'; return; }
+        body.innerHTML=prods.map(p=>'<tr><td><b>'+esc(p.nombre)+'</b><br><small style="color:var(--ink-soft)">'+esc(p.descripcion||'')+'</small></td><td>$'+parseFloat(p.precio||0).toFixed(2)+'</td><td>'+(p.stock||0)+'</td><td><button class="btn btn-danger btn-sm" onclick="borrarProducto(\''+p.productoId+'\')">Eliminar</button></td></tr>').join('');
+    }catch(e){ body.innerHTML='<tr><td colspan="4" class="empty">Error: '+e.message+'</td></tr>'; }
+}
+async function crearProducto(){
+    const nombre=document.getElementById('p-nombre').value.trim(), precio=document.getElementById('p-precio').value, stock=document.getElementById('p-stock').value, desc=document.getElementById('p-desc').value.trim();
+    if(!nombre||!precio){ toast('Nombre y precio son obligatorios', true); return; }
+    try{ await api('/productos','POST',{nombre,precio,stock:stock||0,descripcion:desc}); toast('Producto agregado');
+        ['p-nombre','p-precio','p-stock','p-desc'].forEach(id=>document.getElementById(id).value=''); loadAdminProductos();
+    }catch(e){ toast('Error: '+e.message, true); }
+}
+async function borrarProducto(id){
+    if(!confirm('Eliminar este producto?')) return;
+    try{ await api('/productos/'+id,'DELETE'); toast('Eliminado'); loadAdminProductos(); }catch(e){ toast('Error: '+e.message, true); }
+}
+async function loadClientes(){
+    const body=document.getElementById('clientes-body'); body.innerHTML='<tr><td colspan="3" class="empty">Cargando...</td></tr>';
+    try{
+        const clientes=await api('/clientes');
+        if(!clientes.length){ body.innerHTML='<tr><td colspan="3" class="empty">Sin clientes</td></tr>'; return; }
+        body.innerHTML=clientes.map(c=>'<tr><td><b>'+esc(c.nombre||'')+'</b></td><td>'+esc(c.email||'')+'</td><td>$'+parseFloat(c.totalCompras||0).toFixed(2)+'</td></tr>').join('');
+    }catch(e){ body.innerHTML='<tr><td colspan="3" class="empty">Error: '+e.message+'</td></tr>'; }
+}
+function toast(msg, err){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show'+(err?' err':''); setTimeout(()=>t.className=err?'err':'', 3000); }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+document.getElementById('cart-btn').style.display='none';
+document.getElementById('logout-btn').style.display='none';
+document.getElementById('nav').style.display='none';
+initCognito();
+</script>
+</body>
+</html>

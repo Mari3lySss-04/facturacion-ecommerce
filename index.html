@@ -259,7 +259,8 @@ const CONFIG = {
     COGNITO_REGION: "us-east-1"
 };
 function esAdmin(email){
-    const adminEmails = ['marielysperez2204@gmail.com'];  // correo mio admin
+    const adminEmails = ['marielysperez2204@gmail.com',
+                        'regis.rivera@utp.ac.pa'];  // correo mio admin
     return email && adminEmails.includes(email.toLowerCase());
 }
 let usuario=null, carrito=[], userPool=null, cognitoUser=null, todosProductos=[], datosReporte={stats:{},dias:[]};
